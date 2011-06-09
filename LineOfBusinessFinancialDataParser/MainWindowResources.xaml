@@ -12,12 +12,12 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Width="300" TextAlignment="Right" Text="{Binding Path=Name}"/>
+                                <TextBlock Width="200" Text="{Binding Path=Name}"/>
                                 <TextBox Width="50" Padding="1 0 0 0" Text="{Binding Path=Value, Mode=TwoWay}"/>
-                                <CheckBox IsChecked="{Binding Path=IsReceiver, Mode=TwoWay}" 
+                                <!--<CheckBox IsChecked="{Binding Path=IsReceiver, Mode=TwoWay}" 
                                       ToolTip="Is this line item a receiver?"/>
                                 <CheckBox IsChecked="{Binding Path=SkipDuplicates, Mode=TwoWay}" 
-                                      ToolTip="Skip duplicates of this line item on the same order?"/>
+                                      ToolTip="Skip duplicates of this line item on the same order?"/>-->
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

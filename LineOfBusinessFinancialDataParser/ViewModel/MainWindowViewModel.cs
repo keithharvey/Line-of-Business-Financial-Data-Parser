@@ -79,14 +79,6 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
             }
         }
 
-        List<string> UniqueItems
-        {
-            get
-            {
-                // return a list of unique items derived from the items contained within the activity list
-                return null;
-            }
-        }
 
         #region Private Helpers
 
@@ -150,36 +142,36 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
             _spvm.OkPressed += this.OnPricesFinalized;
         }
 
-        void OnPricesFinalized(object sender, EventArgs e)
+void OnPricesFinalized(object sender, EventArgs e)
+{
+    _value = 0;
+    // if Activities is not populated, fill it with line items from the prices window
+    if (_activities.Count == 0)
+    {
+        foreach (ActivityStruct line in _query)
         {
-            _value = 0;
-            // if Activities is not populated, fill it with line items from the prices window
-            if (_activities.Count == 0)
+            // TODO: Move _activities population to the spreadsheet load, then refresh after the user hits "OkCommand"
+            if (line.activityID != null)
             {
-                foreach (ActivityStruct line in _query)
+                // if the unique activity is not already in the list.
+                if (!_activities.Keys.Contains(line.activityID))
                 {
-                    // TODO: Move _activities population to the spreadsheet load, then refresh after the user hits "OkCommand"
-                    if (line.activityID != null)
-                    {
-                        // if the unique activity is not already in the list.
-                        if (!_activities.Keys.Contains(line.activityID))
-                        {
-                            _activities.Add(line.activityID, new Activity(line.activityID, line.install));
-                        }
-                        var extractedLineItems = from LineItemViewModel livm in _spvm.Items
-                                                 where livm.Name == line.lineItem
-                                                 select livm.LineItem;
-                        _activities[line.activityID].LineItems.Add(extractedLineItems.First());
-                        Debug.WriteLine("Activity #" + line.activityID + " Line Item: " + line.lineItem);
-                    }
+                    _activities.Add(line.activityID, new Activity(line.activityID, line.install));
                 }
+                var extractedLineItems = from LineItemViewModel livm in _spvm.Items
+                                            where livm.Name == line.lineItem
+                                            select livm.LineItem;
+                _activities[line.activityID].LineItems.Add(extractedLineItems.First());
+                Debug.WriteLine("Activity #" + line.activityID + " Line Item: " + line.lineItem);
             }
-            foreach (Activity activity in _activities.Values)
-            {
-                _value += activity.Value(_spvm.PriceOfInstall, _spvm.PriceOfUpgrade);
-            }
-            OnPropertyChanged("StatusText");
         }
+    }
+    foreach (Activity activity in _activities.Values)
+    {
+        _value += activity.Value(_spvm.PriceOfInstall, _spvm.PriceOfUpgrade);
+    }
+    OnPropertyChanged("StatusText");
+}
 
         struct ActivityStruct
         {
