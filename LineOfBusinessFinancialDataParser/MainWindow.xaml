@@ -9,8 +9,8 @@
     </Window.Resources>
     
     <StackPanel>
-        <Button Content="{Binding Path=OpenSpreadsheetCommand.DisplayName}" Command="{Binding Path=OpenSpreadsheetCommand.Command}" Height="23" HorizontalAlignment="Left" Margin="12,41,0,0" Name="OpenSpreadsheetButton" VerticalAlignment="Top" Width="130" />
-        <TextBox Text="{Binding Path=StatusText, Mode=OneWay}" Height="35" Margin="0,0,0,126" />
+        <Button Content="{Binding Path=OpenSpreadsheetCommand.DisplayName}" Command="{Binding Path=OpenSpreadsheetCommand.Command}" Height="25" HorizontalAlignment="Left" Margin="12,5,0,5" Name="OpenSpreadsheetButton" VerticalAlignment="Top" Width="130" />
+        <TextBox Text="{Binding Path=StatusText, Mode=OneWay}" Height="35" />
         <ContentControl Content="{Binding Path=Spvm}"/>
     </StackPanel>
 </Window>
