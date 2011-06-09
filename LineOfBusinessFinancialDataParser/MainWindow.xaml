@@ -1,0 +1,16 @@
+﻿<Window x:Class="LineOfBusinessFinancialDataParser.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Line of Business Financial Data Parser"  WindowStyle="SingleBorderWindow" SizeToContent="WidthAndHeight" Width="auto" MinHeight="200px" MinWidth="400px"
+        >
+
+    <Window.Resources>
+        <ResourceDictionary Source="MainWindowResources.xaml" />
+    </Window.Resources>
+    
+    <StackPanel>
+        <Button Content="{Binding Path=OpenSpreadsheetCommand.DisplayName}" Command="{Binding Path=OpenSpreadsheetCommand.Command}" Height="23" HorizontalAlignment="Left" Margin="12,41,0,0" Name="OpenSpreadsheetButton" VerticalAlignment="Top" Width="130" />
+        <TextBox Text="{Binding Path=StatusText, Mode=OneWay}" Height="35" Margin="0,0,0,126" />
+        <ContentControl Content="{Binding Path=Spvm}"/>
+    </StackPanel>
+</Window>
