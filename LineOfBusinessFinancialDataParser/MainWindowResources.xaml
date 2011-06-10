@@ -8,6 +8,10 @@
     <DataTemplate DataType="{x:Type vm:SelectPricesViewModel}">
         <Grid >
             <StackPanel Visibility="{Binding Path=IsPopulated, Converter={StaticResource MyBooleanToVisibilityConverter}}">
+                <TextBlock Width="200" Text="Price Of Install"/>
+                <TextBox Width="50" Text="{Binding Path=PriceOfInstall}"/>
+                <TextBlock Width="200" Text="Price Of Upgrade"/>
+                <TextBox Width="50" Text="{Binding Path=PriceOfUpgrade}"/>
                 <ItemsControl Width="500" Margin="10" ItemsSource="{Binding Path=Items}" >
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

@@ -22,14 +22,13 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
         CommandViewModel _openSpreadsheet;
         string _filename = null;
         string _statusText = "Please select a pay spreadsheet to begin.";
-        Dictionary<string, Activity> _activities = new Dictionary<string,Activity>();
+        Dictionary<string, Activity> _activities = new Dictionary<string, Activity>();
         SelectPricesViewModel _spvm = new SelectPricesViewModel();
         double _value = 0;
         /// <summary>
         /// Insantiated inside LoadSpreadSheet()
         /// Holds the dataset with ActivityNumber as the key, ActivityStruct as the value
         /// </summary>
-        EnumerableRowCollection<ActivityStruct> _query;
 
         #endregion Fields
 
@@ -115,72 +114,62 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
 
             // now, make it enumerable
             var data = ds.Tables["Activity Number"].AsEnumerable();
-            // grab our data fromt he spreadsheet data with a LINQ query
-            _query = data.Where(x => x.Field<string>("Activity Number") != string.Empty).Select(x => 
-                new ActivityStruct
-                {
-                    activityID = x.Field<string>("Activity Number"),
-                    lineItem = x.Field<string>("Product Line"),
-                    install = x.Field<string>("Order Sub Type") == "New Install"
-                });
 
-            List<string> uniqueActivities = new List<string>();
-            List<string> uniqueItems = new List<string>();
-            // populate a list of unique activities
-            // TODO: Figure out a way to do this and uniqueItems with one pass, leaving it the way it is now because the LINQ is readable
-            uniqueActivities = (from x in _query
-                                where x.activityID != null
-                                select x.activityID).Distinct().ToList();
-            uniqueItems = (from x in _query
-                          where x.lineItem != null
-                          select x.lineItem).Distinct().ToList();
+            Dictionary<string, LineItem> uniqueLineItems = new Dictionary<string, LineItem>();
+            // iterate through every line of the excel table
+            foreach (var x in data)
+            {
+                // get the raw strings from our data, used for dictionary keys and model unique IDs
+                string lineItemID = x.Field<string>("Product Line");
+                string activityID = x.Field<string>("Activity Number");
+
+                // make sure our line item and activity string aren't null
+                // if line item is null, we don't really care about the entry
+                if (activityID != null && lineItemID != null)
+                {
+                    bool isInstall = x.Field<string>("Order Sub Type") == "New Install";
+
+
+                    // see if the new line item is already in our unique list
+                    if(!uniqueLineItems.Keys.Contains(lineItemID))
+                    {
+                        //instantiate the new line data we're going to add to our tree structure
+                        LineItem newLineItem = new LineItem(lineItemID, 0);
+                        // add it, referencing newLineItem.Name saves redundant data
+                        uniqueLineItems.Add(newLineItem.Name, newLineItem);
+                    }
+
+                    if (!_activities.Keys.Contains(activityID))
+                    {
+                        Activity newActivity = new Activity(activityID, isInstall, uniqueLineItems);
+                        // we add the new activity to the list using the same method we used earlier with lineItem
+                        _activities.Add(newActivity.ActivityNumber, newActivity);
+                        // passes a reference to the uniqueLineItems instance of our object
+                        // that way, when it updates from the VM data bind our models auto-update
+                        _activities[activityID].AddLineItem(uniqueLineItems[lineItemID]);
+                    }
+                    else
+                    {
+                        _activities[activityID].AddLineItem(uniqueLineItems[lineItemID]);
+                    }
+                }
+            }
+            
+            _spvm.AddItems(uniqueLineItems);
+            _spvm.OkPressed += this.OnPricesFinalized;
 
             // TODO: This status text system doesn't seem consistent with the MVVM pattern, look into it
             OnPropertyChanged("StatusText");
-
-            _spvm.AddItems(uniqueItems);
-            _spvm.OkPressed += this.OnPricesFinalized;
         }
 
-void OnPricesFinalized(object sender, EventArgs e)
-{
-    _value = 0;
-    // if Activities is not populated, fill it with line items from the prices window
-    if (_activities.Count == 0)
-    {
-        foreach (ActivityStruct line in _query)
+        void OnPricesFinalized(object sender, EventArgs e)
         {
-            // TODO: Move _activities population to the spreadsheet load, then refresh after the user hits "OkCommand"
-            if (line.activityID != null)
+            foreach (Activity activity in _activities.Values)
             {
-                // if the unique activity is not already in the list.
-                if (!_activities.Keys.Contains(line.activityID))
-                {
-                    _activities.Add(line.activityID, new Activity(line.activityID, line.install));
-                }
-                var extractedLineItems = from LineItemViewModel livm in _spvm.Items
-                                            where livm.Name == line.lineItem
-                                            select livm.LineItem;
-                _activities[line.activityID].LineItems.Add(extractedLineItems.First());
-                Debug.WriteLine("Activity #" + line.activityID + " Line Item: " + line.lineItem);
+                _value += activity.Value(_spvm.PriceOfInstall, _spvm.PriceOfUpgrade);
             }
+            OnPropertyChanged("StatusText");
         }
-    }
-    foreach (Activity activity in _activities.Values)
-    {
-        _value += activity.Value(_spvm.PriceOfInstall, _spvm.PriceOfUpgrade);
-    }
-    OnPropertyChanged("StatusText");
-}
-
-        struct ActivityStruct
-        {
-            public string activityID;
-            public string lineItem;
-            public bool install;
-        }
-
-
         #endregion
     }
 }

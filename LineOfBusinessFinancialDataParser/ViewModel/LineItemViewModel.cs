@@ -45,18 +45,6 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
                 OnPropertyChanged("IsReceiver");
             }
         }
-        public bool SkipDuplicates
-        {
-            get
-            {
-                return _lineItem.SkipDuplicates;
-            }
-            set
-            {
-                _lineItem.SkipDuplicates = value;
-                OnPropertyChanged("SkipDuplicates");
-            }
-        }
 
         public LineItemViewModel(LineItem lineItem)
         {

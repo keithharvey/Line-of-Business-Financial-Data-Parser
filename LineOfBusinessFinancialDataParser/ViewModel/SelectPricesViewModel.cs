@@ -50,32 +50,18 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
             }
         }
         /// <summary>
-        /// Simply returns the LineItemViewModel value for installs since I already had
-        /// that class set up to accept user input, I just reused it to evalute
-        /// the two extra fields I needed
+        /// exposed directly to the interface
         /// </summary>
         public double PriceOfInstall
         {
-            get
-            {
-                return (from LineItemViewModel li in Items
-                               where li.Name == "New Install"
-                               select li.Value).First();
-            }
+            get;
+            set;
         }
-        /// <summary>
-        /// Simply returns the LineItemViewModel value for upgrades since I already had
-        /// that class set up to accept user input, I just reused it to evalute
-        /// the two extra fields I needed
-        /// </summary>
+
         public double PriceOfUpgrade
         {
-            get
-            {
-                return (from LineItemViewModel li in Items
-                               where li.Name == "Upgrade"
-                               select li.Value).First();
-            }
+            get;
+            set;
         }
         #endregion
 
@@ -86,7 +72,6 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
 
         }
         #endregion
-
 
         #region OK Command
 
@@ -108,7 +93,6 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
         }
 
         #endregion // OK Command
-
 
         #region OnOkPressed [event]
         /// <summary>
@@ -146,25 +130,21 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
                 Items.Remove(removedItem);
             }
 
-            // add our two default values into the list
-            Items.Add(new LineItemViewModel(new LineItem("New Install", 0)));
-            Items.Add(new LineItemViewModel(new LineItem("Upgrade", 0)));
-
             OnPropertyChanged("IsPopulated");
         }
 
         #endregion Private Helpers
 
-        public void AddItems(List<string> uniqueItems)
+        internal void AddItems(Dictionary<string, LineItem> uniqueItems)
         {
             // null out any previous items in the list
             SetDefaultItems();
 
             if (uniqueItems != null)
             {
-                foreach (string item in uniqueItems)
+                foreach (var item in uniqueItems)
                 {
-                    Items.Add(new LineItemViewModel(new LineItem(item, 0)));
+                    Items.Add(new LineItemViewModel(item.Value));
                 }
 
                 OnPropertyChanged("IsPopulated");

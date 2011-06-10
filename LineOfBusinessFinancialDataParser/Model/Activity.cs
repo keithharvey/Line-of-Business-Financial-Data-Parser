@@ -12,10 +12,12 @@ namespace LineOfBusinessFinancialDataParser.Model
 
         // obtained by evaluating "Activity Number"
         string _activityNumber;
-        // obtained by evaluating "Product Line"
-        List<LineItem> _lineItems;
+        Dictionary<string, LineItem> _uniqueLineItems;
         // obtained by evaluating "Order sub type"
         bool _isInstall;
+        
+        Dictionary<LineItem, int> itemQuantities;
+
 
         #endregion
 
@@ -25,89 +27,76 @@ namespace LineOfBusinessFinancialDataParser.Model
             get { return _activityNumber; }
         }
 
-        public List<LineItem> LineItems
+        public Dictionary<LineItem, int> ItemQuantities
         {
             get
             {
-                if (_lineItems == null)
-                {
-                    _lineItems = new List<LineItem>();
-                }
+                if (itemQuantities == null)
+                    itemQuantities = new Dictionary<LineItem, int>();
 
-                return _lineItems;
-            }
-            set
-            {
-                _lineItems = value;
+                return itemQuantities;
             }
         }
+
         #endregion
 
         #region Constructors
-        public Activity(string activityNumber, bool isInstall)
+        /// <summary>
+        /// represents an individual activity, containing line items
+        /// </summary>
+        /// <param name="activityNumber">Unique activityID</param>
+        /// <param name="isInstall">True if an install, false if an upgrade.</param>
+        /// <param name="uniqueLineItems">Collection of line items, same list passed into the spvm.</param>
+        public Activity(string activityNumber, bool isInstall, Dictionary<string, LineItem> uniqueLineItems)
         {
             _activityNumber = activityNumber;
             _isInstall = isInstall;
+            _uniqueLineItems = uniqueLineItems;
         }
 
-        public Activity(string activityNumber, string lineItemName)
-        {
-            _activityNumber = activityNumber;
-            LineItems.Add(new LineItem(lineItemName, 0));
-        }
         #endregion
 
-        public double Value(double PriceOfInstall, double PriceOfUpgrade)
+        public double Value(double priceOfInstall, double priceOfUpgrade)
         {
+            // accumulates value across the method
             double value = 0;
             Debug.WriteLine("Activity #" + ActivityNumber);
 
             if (_isInstall)
             {
-                Debug.WriteLine("Install - Value: " + PriceOfInstall);
-                value += PriceOfInstall;
+                Debug.WriteLine("Install - Value: " + priceOfInstall);
+                value += priceOfInstall;
             }
             else
             {
-                Debug.WriteLine("Upgrade - Value: " + PriceOfUpgrade);
-                value += PriceOfUpgrade;
+                Debug.WriteLine("Uprade - Value: " + priceOfUpgrade);
+                value += priceOfUpgrade;
             }
-
-            bool skippedOne = false;
-            // Populate a dictionary to track one-offs, bool is true if the line item has already been counted
-            Dictionary<LineItem, bool> OneOffTracker = new Dictionary<LineItem, bool>();
-            foreach (LineItem li in OneOffLineItems)
-            {
-                OneOffTracker.Add(li, false);
-            }
+                        
+            // client gets a free receiver install with the price of an install
+            bool installReceiverNotPaid = true;
             //now we process the line items for value
-            foreach (LineItem li in LineItems)
+            foreach (var item in itemQuantities)
             {
-                if (li.Value != 0)
+                // if there is a quantity associated with the item (should never happen)
+                if (item.Key.Value != 0)
                 {
-                    if (li.IsReceiver == false
-                        && li.SkipDuplicates == false)
+                    // now we iterate however many times the item appears in the activity
+                    for (int individualItem = 0; individualItem < item.Value; individualItem++)
                     {
-                        value += li.Value;
-                        Debug.WriteLine(li.Name + " - Value: " + li.Value);
-                    }
-                    else if (li.SkipDuplicates == true &&
-                        !OneOffTracker[li])
-                    {
-                        OneOffTracker[li] = true;
-                        value += li.Value;
-                        Debug.WriteLine(li.Name + " - Value: " + li.Value);
-                    }
-                    // if it's a SkipOnInstall item, check to see if one has already been skipped before adding the value
-                    else if (_isInstall &&
-                        !skippedOne)
-                    {
-                        skippedOne = true;
-                    }
-                    else
-                    {
-                        value += li.Value;
-                        Debug.WriteLine(li.Name + " - Value: " + li.Value);
+                        // if activity is an install, item is a receiver, and we haven't already acknowledged the first receiver
+                        if (_isInstall && installReceiverNotPaid && item.Key.IsReceiver)
+                        {
+                            Debug.WriteLine("First receiver accounted for.");
+                            // value remains the same
+                            installReceiverNotPaid = false;
+                        }
+                        // this catches everything else for both installs, upgrades, non-first receivers
+                        else
+                        {
+                            Debug.WriteLine("Added " + item.Key.Name + ": " + item.Key.Value);
+                            value += item.Key.Value;
+                        }
                     }
                 }
             }
@@ -117,17 +106,18 @@ namespace LineOfBusinessFinancialDataParser.Model
             return value;
         }
 
-        /// <summary>
-        /// returns a list of line items only meant to be counted once per activity
-        /// </summary>
-        List<LineItem> OneOffLineItems
+
+        internal void AddLineItem(LineItem lineItem)
         {
-            get
+            if (ItemQuantities.Keys.Contains(lineItem))
             {
-                return (from LineItem li in LineItems
-                        where li.SkipDuplicates == true
-                        select li).ToList();
+                ItemQuantities[lineItem]++;
+            }
+            else
+            {
+                ItemQuantities.Add(lineItem, 1);
             }
         }
+
     }
 }
