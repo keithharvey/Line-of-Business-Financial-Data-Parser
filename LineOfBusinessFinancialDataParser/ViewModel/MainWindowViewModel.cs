@@ -131,7 +131,7 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
 
 
                     // see if the new line item is already in our unique list
-                    if(!uniqueLineItems.Keys.Contains(lineItemID))
+                    if (!uniqueLineItems.Keys.Contains(lineItemID))
                     {
                         //instantiate the new line data we're going to add to our tree structure
                         LineItem newLineItem = new LineItem(lineItemID, 0);
@@ -154,7 +154,7 @@ namespace LineOfBusinessFinancialDataParser.ViewModel
                     }
                 }
             }
-            
+
             _spvm.AddItems(uniqueLineItems);
             _spvm.OkPressed += this.OnPricesFinalized;
 
